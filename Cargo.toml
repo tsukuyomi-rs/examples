@@ -1,0 +1,13 @@
+[workspace]
+members = [
+  "async-await",
+  "basic",
+  "diesel",
+  "git-server",
+  "json",
+  "juniper",
+  "lines",
+  "routing",
+  "tls",
+  "unix-socket",
+]

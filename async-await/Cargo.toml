@@ -1,0 +1,14 @@
+[package]
+name = "example-async-await"
+version = "0.0.0"
+authors = ["Yusuke Sasaki <yusuke.sasaki.nuem@gmail.com>"]
+publish = false
+
+[[bin]]
+name = "async-await"
+path = "src/main.rs"
+doc = false
+
+[dependencies]
+tsukuyomi = "0.2"
+futures-await = "0.1.1"
