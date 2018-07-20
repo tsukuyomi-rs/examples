@@ -1,7 +1,8 @@
 extern crate tsukuyomi;
 
+use tsukuyomi::handler::ready_handler;
 use tsukuyomi::server::Server;
-use tsukuyomi::{App, Handler};
+use tsukuyomi::App;
 
 fn main() -> tsukuyomi::AppResult<()> {
     let sock_path: std::path::PathBuf = std::env::args()
@@ -9,11 +10,7 @@ fn main() -> tsukuyomi::AppResult<()> {
         .map(Into::into)
         .unwrap_or_else(|| "/tmp/tsukuyomi-uds.sock".into());
 
-    let app = App::builder()
-        .mount("/", |r| {
-            r.get("/").handle(Handler::new_ready(|_| "Hello"));
-        })
-        .finish()?;
+    let app = App::builder().route(("/", ready_handler(|_| "Hello"))).finish()?;
 
     let server = Server::builder()
         .transport(|t| {

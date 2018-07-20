@@ -10,4 +10,4 @@ path = "src/main.rs"
 doc = false
 
 [dependencies]
-tsukuyomi = { version = "0.2", features = ["tls"] }
+tsukuyomi = { version = "0.3.0-dev", features = ["tls"] }

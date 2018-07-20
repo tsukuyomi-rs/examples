@@ -10,8 +10,7 @@ path = "src/main.rs"
 doc = false
 
 [dependencies]
-tsukuyomi = "0.2"
-serde = { version = "1.0", features = ["derive"] }
+tsukuyomi = "0.3.0-dev"
 futures = "0.1.21"
-pretty_env_logger = "0.2.3"
-log = "0.4"
+serde = { version = "1.0", features = ["derive"] }
+http = "0.1.6"

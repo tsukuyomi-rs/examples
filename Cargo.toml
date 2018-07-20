@@ -1,13 +1,18 @@
 [workspace]
 members = [
-  "async-await",
   "basic",
-  "diesel",
-  "git-server",
+  # "diesel",
   "json",
-  "juniper",
-  "lines",
+  # "juniper",
+  # "lines",
   "routing",
   "tls",
   "unix-socket",
+
+  # The following members works only on nightly channel.
+  # "async-await",
+  # "git-server",
 ]
+
+[patch.crates-io]
+tsukuyomi = { git = "https://github.com/tsukuyomi-rs/tsukuyomi.git", branch = "master" }

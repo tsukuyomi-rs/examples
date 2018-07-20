@@ -1,34 +1,31 @@
-extern crate pretty_env_logger;
 extern crate tsukuyomi;
 
-use tsukuyomi::{App, Handler};
+use tsukuyomi::handler::ready_handler;
+use tsukuyomi::App;
 
 fn main() -> tsukuyomi::AppResult<()> {
-    pretty_env_logger::init();
-
     let app = App::builder()
-        .mount("/", |m| {
-            m.get("/").handle(Handler::new_ready(|_| "Hello, world\n"));
+        .route(("/", ready_handler(|_| "Hello, world\n")))
+        .mount("/api/v1/", |scope| {
+            scope.mount("/posts", |scope| {
+                scope.route((
+                    "/:id",
+                    ready_handler(|input| format!("get_post(id = {})", &input.params()[0])),
+                ));
 
-            m.mount("/api/v1/", |m| {
-                m.mount("/posts", |m| {
-                    m.get("/:id").handle(Handler::new_ready(|input| {
-                        format!("get_post(id = {})", &input.params()[0])
-                    }));
+                scope.route(("/", ready_handler(|_| "list_posts")));
 
-                    m.get("/").handle(Handler::new_ready(|_| "list_posts"));
-
-                    m.post("/").handle(Handler::new_ready(|_| "add_post"));
-                });
-
-                m.mount("/user", |m| {
-                    m.get("/auth").handle(Handler::new_ready(|_| "Authentication"));
-                });
+                scope.route(("/", "POST", ready_handler(|_| "add_post")));
             });
 
-            m.get("/static/*path")
-                .handle(Handler::new_ready(|input| format!("path = {}\n", &input.params()[0])));
+            scope.mount("/user", |scope| {
+                scope.route(("/auth", ready_handler(|_| "Authentication")));
+            });
         })
+        .route((
+            "/static/*path",
+            ready_handler(|input| format!("path = {}\n", &input.params()[0])),
+        ))
         .finish()?;
 
     tsukuyomi::run(app)
