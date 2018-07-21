@@ -4,10 +4,10 @@ members = [
   # "diesel",
   "json",
   # "juniper",
-  # "lines",
   "routing",
   "tls",
   "unix-socket",
+  "websocket",
 
   # The following members works only on nightly channel.
   # "async-await",

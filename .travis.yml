@@ -24,6 +24,7 @@ matrix:
         - cargo test -p example-routing
         - cargo test -p example-tls
         - cargo test -p example-unix-socket
+        - cargo test -p example-websocket
 
     # - rust: nightly
     #   script:

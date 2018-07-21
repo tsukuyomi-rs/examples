@@ -1,19 +1,25 @@
 [package]
-name = "example-lines"
+name = "example-websocket"
 version = "0.0.0"
 authors = ["Yusuke Sasaki <yusuke.sasaki.nuem@gmail.com>"]
 publish = false
 
 [[bin]]
-name = "lines"
+name = "websocket"
 path = "src/main.rs"
 doc = false
 
 [dependencies]
-tsukuyomi = "0.2"
+tsukuyomi = "0.3.0-dev"
 futures = "0.1.21"
 http = "0.1.6"
 failure = { version = "0.1.1", features = ["derive"] }
-log = "0.4"
-pretty_env_logger = "0.2.3"
+tokio-io = "0.1"
 tokio-codec = "0.1.0"
+base64 = "0.9.2"
+sha1 = "0.6.0"
+
+[dependencies.websocket]
+version = "0.20.3"
+default-features = false
+features = ["async"]
