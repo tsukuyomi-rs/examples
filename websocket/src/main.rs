@@ -1,27 +1,32 @@
 extern crate futures;
-#[macro_use]
-extern crate failure;
-extern crate base64;
-extern crate http;
-extern crate sha1;
-extern crate tokio_codec;
-extern crate tokio_io;
 extern crate tsukuyomi;
-extern crate websocket;
+extern crate tsukuyomi_websocket;
 
-mod ws;
+use futures::prelude::*;
+use tsukuyomi::{App, Input};
+use tsukuyomi_websocket::{start, OwnedMessage};
 
-use http::Response;
-use tsukuyomi::{handler, App, Input};
-
-fn websocket(input: &mut Input) -> tsukuyomi::Result<Response<()>> {
-    ws::start(input)
+fn websocket(input: &mut Input) -> tsukuyomi::handler::Handle {
+    start(input, |cx| {
+        let (sink, stream) = cx.stream.split();
+        stream
+            .take_while(|m| Ok(!m.is_close()))
+            .filter_map(|m| {
+                println!("Message from client: {:?}", m);
+                match m {
+                    OwnedMessage::Ping(p) => Some(OwnedMessage::Pong(p)),
+                    OwnedMessage::Pong(_) => None,
+                    _ => Some(m),
+                }
+            })
+            .forward(sink)
+            .and_then(|(_, sink)| sink.send(OwnedMessage::Close(None)))
+            .then(|_| Ok(()))
+    })
 }
 
 fn main() -> tsukuyomi::AppResult<()> {
-    let app = App::builder()
-        .route(("/ws", handler::ready_handler(websocket)))
-        .finish()?;
+    let app = App::builder().route(("/ws", websocket)).finish()?;
 
     tsukuyomi::run(app)
 }
