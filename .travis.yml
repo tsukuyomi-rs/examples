@@ -20,14 +20,13 @@ matrix:
         #- cargo test -p example-diesel
         - cargo test -p example-json
         #- cargo test -p example-juniper
-        #- cargo test -p example-lines
         - cargo test -p example-routing
         - cargo test -p example-tls
         - cargo test -p example-unix-socket
         - cargo test -p example-websocket
 
-    # - rust: nightly
-    #   script:
-    #     - cargo clean
-    #     - cargo test -p example-async-await
-    #     - cargo test -p example-git-server
+    - rust: nightly
+      script:
+        - cargo clean
+        - cargo test -p example-async-await
+        - cargo test -p example-git-server

@@ -1,4 +1,5 @@
-#![feature(proc_macro, proc_macro_non_items, generators)]
+#![feature(use_extern_macros)]
+#![feature(proc_macro_non_items, generators)]
 
 extern crate bytes;
 extern crate failure;
@@ -14,16 +15,19 @@ extern crate tsukuyomi;
 mod git;
 
 use tsukuyomi::error::HttpError;
+use tsukuyomi::global_key;
 use tsukuyomi::output::ResponseBody;
-use tsukuyomi::{App, Error, Handler, Input};
+use tsukuyomi::{handler, input, App, Error, Input};
 
 use failure::{format_err, Fail};
 use futures::prelude::{async, await, Future};
-use http::{header, Response, StatusCode};
+use http::{header, Method, Response, StatusCode};
 use serde::Deserialize;
 use std::{env, fs};
 
 use git::{Repository, RpcMode};
+
+global_key!(static REPO: Repository);
 
 fn main() -> tsukuyomi::AppResult<()> {
     pretty_env_logger::init();
@@ -32,14 +36,18 @@ fn main() -> tsukuyomi::AppResult<()> {
     let repo = Repository::new(fs::canonicalize(repo_path)?);
 
     let app = App::builder()
-        .mount("/", |r| {
-            r.get("/info/refs").handle(Handler::new_fully_async(handle_info_refs));
-            r.post("/git-receive-pack")
-                .handle(Handler::new_fully_async(|| handle_rpc(RpcMode::Receive)));
-            r.post("/git-upload-pack")
-                .handle(Handler::new_fully_async(|| handle_rpc(RpcMode::Upload)));
-        })
-        .manage(repo)
+        .set(&REPO, repo)
+        .route(("/info/refs", handler::async_handler(|_| handle_info_refs())))
+        .route((
+            "/git-receive-pack",
+            Method::POST,
+            handler::async_handler(|_| handle_rpc(RpcMode::Receive)),
+        ))
+        .route((
+            "/git-upload-pack",
+            Method::POST,
+            handler::async_handler(|_| handle_rpc(RpcMode::Upload)),
+        ))
         .finish()?;
 
     tsukuyomi::run(app)
@@ -47,9 +55,10 @@ fn main() -> tsukuyomi::AppResult<()> {
 
 #[async]
 fn handle_info_refs() -> tsukuyomi::Result<Response<ResponseBody>> {
-    let mode = Input::with_current(|input| validate_info_refs(input))?;
+    let mode = input::with_get_current(|input| validate_info_refs(input))?;
 
-    let advertise_refs = Input::with_current(|input| input.get::<Repository>().stateless_rpc(mode).advertise_refs());
+    let advertise_refs =
+        input::with_get_current(|input| input.get(&REPO).unwrap().stateless_rpc(mode).advertise_refs());
 
     let output = await!(advertise_refs)?;
 
@@ -81,11 +90,11 @@ fn validate_info_refs(cx: &Input) -> Result<RpcMode, HandleError> {
 
 #[async]
 fn handle_rpc(mode: RpcMode) -> tsukuyomi::Result<Response<ResponseBody>> {
-    Input::with_current(|input| validate_rpc(input, mode))?;
+    input::with_get_current(|input| validate_rpc(input, mode))?;
 
-    let body = Input::with_current(|input| input.body_mut().read_all().map_err(Error::critical));
+    let body = input::with_get_current(|input| input.body_mut().read_all().map_err(Error::critical));
 
-    let rpc_call = Input::with_current(|input| input.get::<Repository>().stateless_rpc(mode).call(body));
+    let rpc_call = input::with_get_current(|input| input.get(&REPO).unwrap().stateless_rpc(mode).call(body));
     let output = await!(rpc_call)?;
 
     Response::builder()

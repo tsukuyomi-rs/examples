@@ -10,9 +10,10 @@ members = [
   "websocket",
 
   # The following members works only on nightly channel.
-  # "async-await",
-  # "git-server",
+  "async-await",
+  "git-server",
 ]
 
 [patch.crates-io]
 tsukuyomi = { git = "https://github.com/tsukuyomi-rs/tsukuyomi.git", branch = "master" }
+#tsukuyomi = { path = "../tsukuyomi" }

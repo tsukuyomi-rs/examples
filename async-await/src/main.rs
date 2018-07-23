@@ -1,4 +1,4 @@
-#![feature(proc_macro)]
+#![feature(use_extern_macros)]
 #![feature(proc_macro_non_items)]
 #![feature(generators)]
 
@@ -6,11 +6,11 @@ extern crate futures_await as futures;
 extern crate tsukuyomi;
 
 use futures::prelude::{async, await, Future};
-use tsukuyomi::{App, Error, Handler, Input};
+use tsukuyomi::{handler, input, App, Error, Input};
 
 #[async]
 fn async_handler() -> tsukuyomi::Result<String> {
-    let read_all = Input::with_current(|input| input.body_mut().read_all());
+    let read_all = input::with_get_current(|input| input.body_mut().read_all());
     let body = await!(read_all.convert_to())?;
     println!("Received: {:?}", body);
     Ok(body)
@@ -25,10 +25,8 @@ fn async_handler_with_input(input: &mut Input) -> impl Future<Item = String, Err
 
 fn main() -> tsukuyomi::AppResult<()> {
     let app = App::builder()
-        .mount("/", |m| {
-            m.post("/async1").handle(Handler::new_fully_async(async_handler));
-            m.post("/async2").handle(Handler::new_async(async_handler_with_input));
-        })
+        .route(("/async1", "POST", handler::async_handler(|_| async_handler())))
+        .route(("/async2", "POST", handler::async_handler(async_handler_with_input)))
         .finish()?;
 
     tsukuyomi::run(app)
