@@ -1,14 +1,14 @@
 extern crate futures;
 extern crate tsukuyomi;
-extern crate tsukuyomi_websocket;
 
 use futures::prelude::*;
-use tsukuyomi::{App, Input};
-use tsukuyomi_websocket::{start, OwnedMessage};
+use tsukuyomi::handler::wrap_ready;
+use tsukuyomi::websocket::{start, OwnedMessage};
+use tsukuyomi::{App, Input, Responder};
 
-fn websocket(input: &mut Input) -> tsukuyomi::handler::Handle {
-    start(input, |cx| {
-        let (sink, stream) = cx.stream.split();
+fn echo_back(input: &mut Input) -> impl Responder {
+    start(input, |transport, _cx| {
+        let (sink, stream) = transport.split();
         stream
             .take_while(|m| Ok(!m.is_close()))
             .filter_map(|m| {
@@ -26,7 +26,7 @@ fn websocket(input: &mut Input) -> tsukuyomi::handler::Handle {
 }
 
 fn main() -> tsukuyomi::AppResult<()> {
-    let app = App::builder().route(("/ws", websocket)).finish()?;
+    let app = App::builder().route(("/ws", wrap_ready(echo_back))).finish()?;
 
     tsukuyomi::run(app)
 }

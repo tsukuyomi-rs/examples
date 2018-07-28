@@ -1,6 +1,6 @@
 extern crate tsukuyomi;
 
-use tsukuyomi::handler::ready_handler;
+use tsukuyomi::handler::wrap_ready;
 use tsukuyomi::server::Server;
 use tsukuyomi::App;
 
@@ -10,7 +10,7 @@ fn main() -> tsukuyomi::AppResult<()> {
         .map(Into::into)
         .unwrap_or_else(|| "/tmp/tsukuyomi-uds.sock".into());
 
-    let app = App::builder().route(("/", ready_handler(|_| "Hello"))).finish()?;
+    let app = App::builder().route(("/", wrap_ready(|_| "Hello"))).finish()?;
 
     let server = Server::builder()
         .transport(|t| {

@@ -7,10 +7,8 @@ extern crate http;
 use futures::prelude::*;
 use http::Method;
 
-use tsukuyomi::handler::{async_handler, ready_handler};
-use tsukuyomi::json::{Json, JsonErrorHandler};
-use tsukuyomi::output::HttpResponse;
-use tsukuyomi::{App, Error, Input};
+use tsukuyomi::json::{HttpResponse, Json, JsonErrorHandler};
+use tsukuyomi::{handler, App, Error, Input};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct User {
@@ -36,8 +34,8 @@ fn read_json_payload(input: &mut Input) -> impl Future<Item = Json<User>, Error 
 
 fn main() -> tsukuyomi::AppResult<()> {
     let app = App::builder()
-        .route(("/", Method::GET, ready_handler(get_json)))
-        .route(("/", Method::POST, async_handler(read_json_payload)))
+        .route(("/", Method::GET, handler::wrap_ready(get_json)))
+        .route(("/", Method::POST, handler::wrap_async(read_json_payload)))
         .error_handler(JsonErrorHandler::new())
         .finish()?;
 

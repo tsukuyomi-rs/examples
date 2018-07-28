@@ -1,13 +1,13 @@
 extern crate tsukuyomi;
 
-use tsukuyomi::handler::ready_handler;
+use tsukuyomi::handler::wrap_ready;
 use tsukuyomi::server::transport::TlsConfig;
 use tsukuyomi::server::Server;
 use tsukuyomi::App;
 
 fn main() -> tsukuyomi::AppResult<()> {
     let app = App::builder()
-        .route(("/", ready_handler(|_| "Hello, Tsukuyomi.\n")))
+        .route(("/", wrap_ready(|_| "Hello, Tsukuyomi.\n")))
         .finish()?;
 
     let server = Server::builder()

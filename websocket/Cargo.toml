@@ -10,7 +10,5 @@ path = "src/main.rs"
 doc = false
 
 [dependencies]
-tsukuyomi = "0.3.0-dev"
+tsukuyomi = { version = "0.3.0-dev", features = ["websocket"] }
 futures = "0.1.21"
-
-tsukuyomi-websocket = { git = "https://github.com/tsukuyomi-rs/tsukuyomi-websocket.git" }

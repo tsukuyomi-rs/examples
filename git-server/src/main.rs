@@ -15,7 +15,6 @@ extern crate tsukuyomi;
 mod git;
 
 use tsukuyomi::error::HttpError;
-use tsukuyomi::global_key;
 use tsukuyomi::output::ResponseBody;
 use tsukuyomi::{handler, input, App, Error, Input};
 
@@ -27,8 +26,6 @@ use std::{env, fs};
 
 use git::{Repository, RpcMode};
 
-global_key!(static REPO: Repository);
-
 fn main() -> tsukuyomi::AppResult<()> {
     pretty_env_logger::init();
 
@@ -36,17 +33,17 @@ fn main() -> tsukuyomi::AppResult<()> {
     let repo = Repository::new(fs::canonicalize(repo_path)?);
 
     let app = App::builder()
-        .set(&REPO, repo)
-        .route(("/info/refs", handler::async_handler(|_| handle_info_refs())))
+        .set(repo)
+        .route(("/info/refs", handler::wrap_async(|_| handle_info_refs())))
         .route((
             "/git-receive-pack",
             Method::POST,
-            handler::async_handler(|_| handle_rpc(RpcMode::Receive)),
+            handler::wrap_async(|_| handle_rpc(RpcMode::Receive)),
         ))
         .route((
             "/git-upload-pack",
             Method::POST,
-            handler::async_handler(|_| handle_rpc(RpcMode::Upload)),
+            handler::wrap_async(|_| handle_rpc(RpcMode::Upload)),
         ))
         .finish()?;
 
@@ -58,7 +55,7 @@ fn handle_info_refs() -> tsukuyomi::Result<Response<ResponseBody>> {
     let mode = input::with_get_current(|input| validate_info_refs(input))?;
 
     let advertise_refs =
-        input::with_get_current(|input| input.get(&REPO).unwrap().stateless_rpc(mode).advertise_refs());
+        input::with_get_current(|input| input.get::<Repository>().unwrap().stateless_rpc(mode).advertise_refs());
 
     let output = await!(advertise_refs)?;
 
@@ -94,7 +91,7 @@ fn handle_rpc(mode: RpcMode) -> tsukuyomi::Result<Response<ResponseBody>> {
 
     let body = input::with_get_current(|input| input.body_mut().read_all().map_err(Error::critical));
 
-    let rpc_call = input::with_get_current(|input| input.get(&REPO).unwrap().stateless_rpc(mode).call(body));
+    let rpc_call = input::with_get_current(|input| input.get::<Repository>().unwrap().stateless_rpc(mode).call(body));
     let output = await!(rpc_call)?;
 
     Response::builder()

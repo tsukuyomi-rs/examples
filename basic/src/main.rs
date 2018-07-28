@@ -1,12 +1,14 @@
 extern crate tsukuyomi;
 
-use tsukuyomi::handler::ready_handler;
-use tsukuyomi::App;
+use tsukuyomi::handler::wrap_ready;
+use tsukuyomi::{App, Input, Responder};
+
+fn handler(_: &mut Input) -> impl Responder {
+    "Hello, world!\n"
+}
 
 fn main() -> tsukuyomi::AppResult<()> {
-    let app = App::builder()
-        .route(("/", ready_handler(|_| "Hello, world!\n")))
-        .finish()?;
+    let app = App::builder().route(("/", wrap_ready(handler))).finish()?;
 
     tsukuyomi::run(app)
 }

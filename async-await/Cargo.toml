@@ -10,5 +10,5 @@ path = "src/main.rs"
 doc = false
 
 [dependencies]
-tsukuyomi = "0.3.0-dev"
+tsukuyomi = { version = "0.3.0-dev", features = ["codegen"] }
 futures-await = "0.1.1"
