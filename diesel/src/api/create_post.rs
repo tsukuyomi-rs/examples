@@ -3,9 +3,8 @@ use diesel::prelude::*;
 use futures::prelude::*;
 use http::StatusCode;
 
-use tsukuyomi::json::Json;
-use tsukuyomi::output::HttpResponse;
-use tsukuyomi::{Error, Input};
+use tsukuyomi::json::{HttpResponse, Json};
+use tsukuyomi::{AsyncResponder, Error, Input};
 
 use conn::{get_conn, run_blocking};
 use model::NewPost;
@@ -30,13 +29,19 @@ impl HttpResponse for Response {
     }
 }
 
-pub fn create_post(input: &mut Input) -> impl Future<Item = Json<Response>, Error = Error> + Send + 'static {
+pub fn create_post(input: &mut Input) -> impl AsyncResponder<Output = Json<Response>> {
     let param = input
         .body_mut()
         .read_all()
         .convert_to::<Json<Param>>()
         .map(Json::into_inner);
-    let conn = get_conn(input.get()).map_err(Error::internal_server_error);
+
+    let conn = input
+        .get()
+        .ok_or_else(|| Error::internal_server_error(format_err!("missing DB pool")))
+        .map(|pool| get_conn(pool))
+        .into_future()
+        .and_then(|conn| conn.map_err(Error::internal_server_error));
 
     (param, conn)
         .into_future()

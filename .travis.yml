@@ -17,7 +17,7 @@ matrix:
       script:
         - cargo clean
         - cargo test -p example-basic
-        #- cargo test -p example-diesel
+        - cargo test -p example-diesel
         - cargo test -p example-json
         #- cargo test -p example-juniper
         - cargo test -p example-routing

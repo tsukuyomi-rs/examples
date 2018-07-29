@@ -3,9 +3,8 @@ use failure::SyncFailure;
 use futures::prelude::*;
 use serde_qs;
 
-use tsukuyomi::json::Json;
-use tsukuyomi::output::HttpResponse;
-use tsukuyomi::{Error, Input};
+use tsukuyomi::json::{HttpResponse, Json};
+use tsukuyomi::{AsyncResponder, Error, Input};
 
 use conn::{get_conn, run_blocking};
 use model::Post;
@@ -27,14 +26,19 @@ pub struct Response(Vec<Post>);
 
 impl HttpResponse for Response {}
 
-pub fn get_posts(input: &mut Input) -> impl Future<Item = Json<Response>, Error = Error> + Send + 'static {
+pub fn get_posts(input: &mut Input) -> impl AsyncResponder<Output = Json<Response>> {
     let param = input
         .uri()
         .query()
         .map(|query| serde_qs::from_str::<Param>(query).map_err(|err| Error::bad_request(SyncFailure::new(err))))
         .unwrap_or_else(|| Ok(Default::default()));
 
-    let conn = get_conn(input.get()).map_err(Error::internal_server_error);
+    let conn = input
+        .get()
+        .ok_or_else(|| Error::internal_server_error(format_err!("missing DB pool")))
+        .map(|pool| get_conn(pool))
+        .into_future()
+        .and_then(|conn| conn.map_err(Error::internal_server_error));
 
     (param, conn)
         .into_future()

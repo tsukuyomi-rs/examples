@@ -1,6 +1,9 @@
+#![warn(unused_extern_crates)]
+
 #[macro_use]
 extern crate diesel;
 extern crate dotenv;
+#[macro_use]
 extern crate failure;
 extern crate futures;
 extern crate http;
@@ -8,8 +11,6 @@ extern crate http;
 extern crate serde;
 extern crate pretty_env_logger;
 extern crate serde_qs;
-extern crate tokio_executor;
-extern crate tokio_threadpool;
 extern crate tsukuyomi;
 
 mod api;
@@ -18,8 +19,10 @@ mod model;
 mod schema;
 
 use dotenv::dotenv;
+use http::Method;
 use std::env;
-use tsukuyomi::{App, Handler};
+use tsukuyomi::handler::wrap_async;
+use tsukuyomi::App;
 
 fn main() -> tsukuyomi::AppResult<()> {
     pretty_env_logger::init();
@@ -28,11 +31,11 @@ fn main() -> tsukuyomi::AppResult<()> {
     let pool = conn::init_pool(env::var("DATABASE_URL")?)?;
 
     let app = App::builder()
-        .manage(pool)
         .mount("/api/v1/posts", |m| {
-            m.get("/").handle(Handler::new_async(api::get_posts));
-            m.post("/").handle(Handler::new_async(api::create_post));
-            m.get("/:id").handle(Handler::new_async(api::get_post));
+            m.set(pool);
+            m.route(("/", Method::GET, wrap_async(api::get_posts)));
+            m.route(("/", Method::POST, wrap_async(api::create_post)));
+            m.route(("/:id", Method::GET, wrap_async(api::get_post)));
         })
         .finish()?;
 

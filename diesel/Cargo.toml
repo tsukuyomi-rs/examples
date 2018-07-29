@@ -10,7 +10,7 @@ path = "src/main.rs"
 doc = false
 
 [dependencies]
-tsukuyomi = "0.2"
+tsukuyomi = "0.3.0-dev"
 
 diesel = { version = "1.3.0", features = ["sqlite", "r2d2"] }
 dotenv = "0.9.0"
@@ -20,5 +20,3 @@ http = "0.1.6"
 pretty_env_logger = "0.2.1"
 serde = { version = "1.0.0", features = ["derive"] }
 serde_qs = "0.4"
-tokio-executor = "0.1"
-tokio-threadpool = "0.1"

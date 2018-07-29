@@ -1,9 +1,8 @@
 use diesel::prelude::*;
 use futures::prelude::*;
 
-use tsukuyomi::json::Json;
-use tsukuyomi::output::HttpResponse;
-use tsukuyomi::{Error, Input};
+use tsukuyomi::json::{HttpResponse, Json};
+use tsukuyomi::{AsyncResponder, Error, Input};
 
 use conn::{get_conn, run_blocking};
 use model::Post;
@@ -13,10 +12,15 @@ pub struct Response(Post);
 
 impl HttpResponse for Response {}
 
-pub fn get_post(input: &mut Input) -> impl Future<Item = Option<Json<Response>>, Error = Error> + Send + 'static {
+pub fn get_post(input: &mut Input) -> impl AsyncResponder<Output = Option<Json<Response>>> {
     let id = input.params()[0].parse::<i32>().map_err(Error::bad_request);
 
-    let conn = get_conn(input.get()).map_err(Error::internal_server_error);
+    let conn = input
+        .get()
+        .ok_or_else(|| Error::internal_server_error(format_err!("missing DB pool")))
+        .map(|pool| get_conn(pool))
+        .into_future()
+        .and_then(|conn| conn.map_err(Error::internal_server_error));
 
     (id, conn)
         .into_future()

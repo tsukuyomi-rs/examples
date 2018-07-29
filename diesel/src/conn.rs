@@ -2,10 +2,9 @@ use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 use diesel::sqlite::SqliteConnection;
 use failure::Error;
 use futures::future::poll_fn;
-use futures::sync::oneshot;
 use futures::{Async, Future};
-use tokio_executor;
-use tokio_threadpool::blocking;
+
+use tsukuyomi::server::blocking::blocking;
 
 pub type ConnPool = Pool<ConnectionManager<SqliteConnection>>;
 #[allow(dead_code)]
@@ -22,26 +21,16 @@ pub fn get_conn(pool: &ConnPool) -> impl Future<Item = Conn, Error = Error> + Se
     run_blocking(move || pool.get())
 }
 
-pub fn run_blocking<F, T, E>(f: F) -> impl Future<Item = T, Error = Error> + Send + 'static
+pub fn run_blocking<F, T, E>(f: F) -> impl Future<Item = T, Error = Error>
 where
-    F: FnOnce() -> Result<T, E> + Send + 'static,
-    T: Send + 'static,
+    F: FnOnce() -> Result<T, E>,
     E: Into<Error>,
 {
-    let (tx, rx) = oneshot::channel();
     let mut f_opt = Some(f);
-    let mut tx_opt = Some(tx);
-
-    tokio_executor::spawn(poll_fn(move || {
-        let result = match blocking(|| f_opt.take().unwrap()()) {
-            Ok(Async::Ready(Ok(v))) => Ok(v),
-            Ok(Async::Ready(Err(e))) => Err(e.into()),
-            Ok(Async::NotReady) => return Ok(Async::NotReady),
-            Err(e) => Err(e.into()),
-        };
-        let _ = tx_opt.take().unwrap().send(result);
-        Ok(().into())
-    }));
-
-    rx.then(|res| res.expect(""))
+    poll_fn(move || match blocking(|| f_opt.take().unwrap()()) {
+        Ok(Async::Ready(Ok(v))) => Ok(Async::Ready(v)),
+        Ok(Async::Ready(Err(e))) => Err(e.into()),
+        Ok(Async::NotReady) => return Ok(Async::NotReady),
+        Err(e) => Err(e.into()),
+    })
 }
