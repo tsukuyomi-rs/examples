@@ -3,7 +3,7 @@ members = [
   "basic",
   "diesel",
   "json",
-  # "juniper",
+  "juniper",
   "routing",
   "tls",
   "unix-socket",

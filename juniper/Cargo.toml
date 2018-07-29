@@ -10,8 +10,8 @@ path = "src/main.rs"
 doc = false
 
 [dependencies]
-tsukuyomi = "0.2"
-tsukuyomi-juniper = "0.1"
+tsukuyomi = "0.3.0-dev"
+tsukuyomi-juniper = { git = "https://github.com/tsukuyomi-rs/tsukuyomi-juniper.git", branch = "master" }
 juniper = "0.9.0"
 futures = "0.1.21"
 failure = { version = "0.1", features = ["derive"] }

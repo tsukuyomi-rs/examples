@@ -10,7 +10,8 @@ mod context;
 mod schema;
 
 use tsukuyomi::App;
-use tsukuyomi_juniper::{AppGraphQLExt as _AppGraphQLExt, GraphQLState};
+use tsukuyomi_juniper::endpoint::{graphiql, GraphQLEndpoint};
+use tsukuyomi_juniper::GraphQLState;
 
 fn main() -> tsukuyomi::AppResult<()> {
     let context = context::Context::default();
@@ -18,8 +19,8 @@ fn main() -> tsukuyomi::AppResult<()> {
     let state = GraphQLState::new(context, schema);
 
     let app = App::builder()
-        .graphql("/graphql", state)
-        .graphiql("/graphiql", "http://127.0.0.1:4000/graphql")
+        .scope(GraphQLEndpoint::new(state, "/graphql"))
+        .route(("/graphiql", graphiql("http://127.0.0.1:4000/graphql")))
         .finish()?;
 
     tsukuyomi::run(app)
