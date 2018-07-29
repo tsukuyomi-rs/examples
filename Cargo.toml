@@ -15,5 +15,5 @@ members = [
 ]
 
 [patch.crates-io]
-# tsukuyomi = { git = "https://github.com/tsukuyomi-rs/tsukuyomi.git", branch = "master" }
-tsukuyomi = { path = "../tsukuyomi" }
+tsukuyomi = { git = "https://github.com/tsukuyomi-rs/tsukuyomi.git", branch = "master" }
+#tsukuyomi = { path = "../tsukuyomi" }
