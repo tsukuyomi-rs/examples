@@ -5,6 +5,7 @@ members = [
   "json",
   "juniper",
   "routing",
+  "staticfile",
   "tls",
   "unix-socket",
   "websocket",

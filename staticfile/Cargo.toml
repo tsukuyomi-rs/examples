@@ -1,0 +1,15 @@
+[package]
+name = "example-staticfile"
+version = "0.0.0"
+authors = ["Yusuke Sasaki <yusuke.sasaki.nuem@gmail.com>"]
+publish = false
+
+[[bin]]
+name = "staticfile"
+path = "src/main.rs"
+doc = false
+
+[dependencies]
+tsukuyomi = "0.3.0-dev"
+tsukuyomi-staticfile = { git = "https://github.com/tsukuyomi-rs/tsukuyomi-staticfile.git", branch = "master" }
+pretty_env_logger = "0.2.1"

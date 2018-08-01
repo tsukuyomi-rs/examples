@@ -21,6 +21,7 @@ matrix:
         - cargo test -p example-json
         #- cargo test -p example-juniper
         - cargo test -p example-routing
+        - cargo test -p example-staticfile
         - cargo test -p example-tls
         - cargo test -p example-unix-socket
         - cargo test -p example-websocket
